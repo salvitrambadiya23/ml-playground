@@ -4,7 +4,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.metrics import mean_absolute_error, r2_score
 from sklearn.preprocessing import LabelEncoder
-
+from sklearn.ensemble import RandomForestRegressor  # New: adds "many trees combined" model
+from catboost import CatBoostRegressor              # New: advanced boosting model
+from xgboost import XGBRegressor                    # New: another advanced boosting model
+from lightgbm import LGBMRegressor                   # New: fast boosting model, good for large data
 # Load
 df = pd.read_csv("data/daily_food_nutrition_dataset.csv", on_bad_lines='skip')
 
@@ -25,12 +28,30 @@ y = df[target]
 # Train/test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-# Decision Tree model
-model = DecisionTreeRegressor(random_state=42)
-model.fit(X_train, y_train)
+# Dictionary of models to compare — add/remove models here easily later
+models = {
+    "Decision Tree": DecisionTreeRegressor(random_state=42),   # your original model
+    "Random Forest": RandomForestRegressor(random_state=42),   # NEW: ensemble of trees
+    "CatBoost": CatBoostRegressor(verbose=0, random_state=42), # NEW: boosting, handles categories well
+    "XGBoost": XGBRegressor(random_state=42),                  # NEW: fast, accurate boosting
+    "LightGBM": LGBMRegressor(random_state=42),                # NEW: fast boosting, good for big data
+}
 
-# Evaluate
-preds = model.predict(X_test)
-print("\n--- Decision Tree Results ---")
-print("MAE:", mean_absolute_error(y_test, preds))
-print("R2 Score:", r2_score(y_test, preds))
+results = []  # store (model_name, MAE, R2) for each model
+
+# Loop through each model: train it, test it, print its score
+for name, model in models.items():
+    model.fit(X_train, y_train)              # train the model
+    preds = model.predict(X_test)             # predict on unseen test data
+    mae = mean_absolute_error(y_test, preds)  # average error in calories
+    r2 = r2_score(y_test, preds)              # how well it explains variance
+    results.append((name, mae, r2))
+    print(f"\n--- {name} ---")
+    print("MAE:", mae)
+    print("R2 Score:", r2)
+
+# Print a clean side-by-side comparison table at the end
+print("\n\n=== Summary ===")
+print(f"{'Model':<15}{'MAE':<12}{'R2 Score'}")
+for name, mae, r2 in results:
+    print(f"{name:<15}{mae:<12.4f}{r2:.4f}")
