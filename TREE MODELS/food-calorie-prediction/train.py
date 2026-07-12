@@ -92,4 +92,35 @@ cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='r2')
 print("\n--- 5-Fold Cross-Validation (CatBoost) ---")
 print("R2 scores per fold:", cv_scores)
 print("Mean R2:", cv_scores.mean())
-print("Std Dev:", cv_scores.std())
+print("Std Dev:", cv_scores.std())# --- Hyperparameter tuning on CatBoost ---
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {
+    'depth': [4, 6, 8],
+    'learning_rate': [0.03, 0.1, 0.2],
+    'iterations': [200, 500]
+}
+
+tuned_model = CatBoostRegressor(verbose=0, random_state=42)
+
+grid_search = GridSearchCV(
+    estimator=tuned_model,
+    param_grid=param_grid,
+    scoring='r2',
+    cv=3,
+    n_jobs=-1
+)
+
+grid_search.fit(X_train, y_train)
+
+print("\n--- CatBoost Hyperparameter Tuning ---")
+print("Best Params:", grid_search.best_params_)
+
+best_tuned_model = grid_search.best_estimator_
+tuned_preds = best_tuned_model.predict(X_test)
+tuned_mae = mean_absolute_error(y_test, tuned_preds)
+tuned_r2 = r2_score(y_test, tuned_preds)
+
+print("Tuned MAE:", tuned_mae)
+print("Tuned R2 Score:", tuned_r2)
+print(f"\nComparison — Original CatBoost R2: {results[2][2]:.4f} vs Tuned CatBoost R2: {tuned_r2:.4f}")
