@@ -85,3 +85,11 @@ plt.title("CatBoost: Predicted vs Actual Calories")
 plt.tight_layout()
 plt.savefig("predicted_vs_actual.png")
 print("Predicted vs Actual chart saved as predicted_vs_actual.png")
+# --- Cross-validation on best model (CatBoost) ---
+from sklearn.model_selection import cross_val_score
+
+cv_scores = cross_val_score(best_model, X, y, cv=5, scoring='r2')
+print("\n--- 5-Fold Cross-Validation (CatBoost) ---")
+print("R2 scores per fold:", cv_scores)
+print("Mean R2:", cv_scores.mean())
+print("Std Dev:", cv_scores.std())
