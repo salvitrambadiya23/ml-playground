@@ -20,11 +20,17 @@ le = LabelEncoder()
 for col in cat_cols:
     df[col] = le.fit_transform(df[col].astype(str))
 
+
+# --- Feature Engineering: new derived columns ---
+df["Fat_to_Carb_ratio"] = df["Fat (g)"] / (df["Carbohydrates (g)"] + 1)  # +1 avoids divide-by-zero
+df["Protein_to_Fat_ratio"] = df["Protein (g)"] / (df["Fat (g)"] + 1)
+df["Total_Macros"] = df["Protein (g)"] + df["Carbohydrates (g)"] + df["Fat (g)"]
+df["Sugar_to_Carb_ratio"] = df["Sugars (g)"] / (df["Carbohydrates (g)"] + 1)
+
 # Features and target
 target = "Calories (kcal)"
 X = df.drop(columns=[target])
 y = df[target]
-
 # Train/test split
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
