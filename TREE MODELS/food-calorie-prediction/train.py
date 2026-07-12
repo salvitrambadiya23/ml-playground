@@ -55,3 +55,21 @@ print("\n\n=== Summary ===")
 print(f"{'Model':<15}{'MAE':<12}{'R2 Score'}")
 for name, mae, r2 in results:
     print(f"{name:<15}{mae:<12.4f}{r2:.4f}")
+    # --- Feature Importance (using our best model: CatBoost) ---
+import matplotlib.pyplot as plt
+
+best_model = models["CatBoost"]  # reuse the already-trained CatBoost model
+importances = best_model.get_feature_importance()
+feature_names = X.columns
+
+# Sort features by importance, highest first
+sorted_idx = np.argsort(importances)[::-1]
+
+plt.figure(figsize=(8, 6))
+plt.barh([feature_names[i] for i in sorted_idx], [importances[i] for i in sorted_idx])
+plt.xlabel("Importance")
+plt.title("CatBoost Feature Importance — What Drives Calorie Predictions")
+plt.gca().invert_yaxis()  # highest importance on top
+plt.tight_layout()
+plt.savefig("feature_importance.png")  # saves chart as an image file
+print("\nFeature importance chart saved as feature_importance.png")
