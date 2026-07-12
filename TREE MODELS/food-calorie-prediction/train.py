@@ -130,3 +130,32 @@ tuned_r2 = r2_score(y_test, tuned_preds)
 print("Tuned MAE:", tuned_mae)
 print("Tuned R2 Score:", tuned_r2)
 print(f"\nComparison — Original CatBoost R2: {results[2][2]:.4f} vs Tuned CatBoost R2: {tuned_r2:.4f}")
+# --- Stacking Ensemble ---
+from sklearn.ensemble import StackingRegressor
+from sklearn.linear_model import Ridge
+
+base_learners = [
+    ("catboost", CatBoostRegressor(verbose=0, random_state=42, depth=4, iterations=500, learning_rate=0.1)),
+    ("xgboost", XGBRegressor(random_state=42)),
+    ("random_forest", RandomForestRegressor(random_state=42)),
+]
+
+# Meta-model: learns how to best combine the base models' predictions
+meta_model = Ridge()
+
+stacked_model = StackingRegressor(
+    estimators=base_learners,
+    final_estimator=meta_model,
+    cv=5
+)
+
+stacked_model.fit(X_train, y_train)
+stacked_preds = stacked_model.predict(X_test)
+
+stacked_mae = mean_absolute_error(y_test, stacked_preds)
+stacked_r2 = r2_score(y_test, stacked_preds)
+
+print("\n--- Stacking Ensemble Results ---")
+print("Stacked MAE:", stacked_mae)
+print("Stacked R2 Score:", stacked_r2)
+print(f"\nComparison — Tuned CatBoost R2: {tuned_r2:.4f} vs Stacked Ensemble R2: {stacked_r2:.4f}")
