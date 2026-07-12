@@ -73,3 +73,15 @@ plt.gca().invert_yaxis()  # highest importance on top
 plt.tight_layout()
 plt.savefig("feature_importance.png")  # saves chart as an image file
 print("\nFeature importance chart saved as feature_importance.png")
+# --- Predicted vs Actual plot (using our best model: CatBoost) ---
+best_preds = best_model.predict(X_test)
+
+plt.figure(figsize=(7, 7))
+plt.scatter(y_test, best_preds, alpha=0.4, color="teal")
+plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'r--', linewidth=2)  # perfect-prediction line
+plt.xlabel("Actual Calories")
+plt.ylabel("Predicted Calories")
+plt.title("CatBoost: Predicted vs Actual Calories")
+plt.tight_layout()
+plt.savefig("predicted_vs_actual.png")
+print("Predicted vs Actual chart saved as predicted_vs_actual.png")
