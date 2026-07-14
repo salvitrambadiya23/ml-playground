@@ -5,3 +5,6 @@ catboost
 xgboost
 lightgbm
 matplotlib
+kaggle
+torch
+torchvision
