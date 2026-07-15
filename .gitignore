@@ -2,3 +2,9 @@ data/
 venv/
 __pycache__/
 *.pyc
+
+# Model checkpoints
+*.pth
+*.pt
+*.h5
+*.ckpt
