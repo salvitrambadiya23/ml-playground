@@ -8,3 +8,5 @@ __pycache__/
 *.pt
 *.h5
 *.ckpt
+
+tailscale-setup-latest*
