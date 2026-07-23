@@ -1,3 +1,4 @@
+import ast
 import pandas as pd
 
 
@@ -5,17 +6,78 @@ def load_data():
     """Load and merge the two TMDB CSVs into one dataframe."""
     movies = pd.read_csv('data/tmdb_5000_movies.csv')
     credits = pd.read_csv('data/tmdb_5000_credits.csv')
-
-    print("movies shape:", movies.shape)
-    print("credits shape:", credits.shape)
-
     merged = movies.merge(credits, on='title')
-    print("merged shape:", merged.shape)
-
     return merged
+
+
+def convert(text):
+    """Extract 'name' field from a JSON-like string list, e.g. genres/keywords."""
+    result = []
+    real_list = ast.literal_eval(text)
+
+    for item in real_list:
+        result.append(item['name'])
+
+    return result
+
+
+def get_top_cast(text, limit=3):
+    """Get only the top N actors, since minor cast doesn't matter much."""
+    result = []
+    real_list = ast.literal_eval(text)
+
+    for i, item in enumerate(real_list):
+        if i < limit:
+            result.append(item['name'])
+
+    return result
+
+
+def get_director(text):
+    """Find the crew member whose job is 'Director'."""
+    real_list = ast.literal_eval(text)
+
+    for item in real_list:
+        if item['job'] == 'Director':
+            return [item['name']]
+
+    return []
+
+
+def remove_spaces(lst):
+    """Remove spaces inside names so 'Chris Evans' stays one token, not two."""
+    return [i.replace(" ", "") for i in lst]
+
+
+def engineer_features(movies):
+    """Turn raw JSON-like columns into one clean 'tags' string per movie."""
+    movies = movies.dropna(subset=['overview', 'genres', 'keywords', 'cast', 'crew']).copy()
+
+    movies['genres'] = movies['genres'].apply(convert)
+    movies['keywords'] = movies['keywords'].apply(convert)
+    movies['cast'] = movies['cast'].apply(get_top_cast)
+    movies['crew'] = movies['crew'].apply(get_director)
+    movies['overview'] = movies['overview'].apply(lambda x: x.split())
+
+    movies['genres'] = movies['genres'].apply(remove_spaces)
+    movies['keywords'] = movies['keywords'].apply(remove_spaces)
+    movies['cast'] = movies['cast'].apply(remove_spaces)
+    movies['crew'] = movies['crew'].apply(remove_spaces)
+
+    movies['tags'] = (
+        movies['overview'] + movies['genres'] +
+        movies['keywords'] + movies['cast'] + movies['crew']
+    )
+
+    new_df = movies[['movie_id', 'title', 'tags']].copy()
+    new_df['tags'] = new_df['tags'].apply(lambda x: " ".join(x).lower())
+    return new_df
 
 
 if __name__ == "__main__":
     movies = load_data()
-    print("\nColumns:\n", movies.columns.tolist())
-    print("\nFirst row:\n", movies.iloc[0])
+    new_df = engineer_features(movies)
+
+    print(new_df.shape)
+    print(new_df.head())
+    print("\nSample tags for movie 0:\n", new_df['tags'].iloc[0])
