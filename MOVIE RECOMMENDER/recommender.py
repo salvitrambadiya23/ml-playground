@@ -1,5 +1,7 @@
 import ast
 import pandas as pd
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.neighbors import NearestNeighbors
 
 
 def load_data():
@@ -74,10 +76,44 @@ def engineer_features(movies):
     return new_df
 
 
+def vectorize_tags(new_df):
+    """Convert each movie's tags into a numeric vector using bag-of-words counts."""
+    cv = CountVectorizer(max_features=5000, stop_words='english')
+    vectors = cv.fit_transform(new_df['tags']).toarray()
+    return vectors, cv
+
+
+def build_model(vectors):
+    """Fit a KNN model that finds each movie's nearest neighbors by cosine distance."""
+    knn = NearestNeighbors(n_neighbors=6, metric='cosine', algorithm='brute')
+    knn.fit(vectors)
+    return knn
+
+
+def recommend(movie_title, new_df, vectors, knn):
+    """Print the 5 most similar movies to the given title."""
+    matches = new_df[new_df['title'].str.lower() == movie_title.lower()]
+
+    if matches.empty:
+        print(f"'{movie_title}' not found in dataset.")
+        return
+
+    idx = matches.index[0]
+    movie_vector = vectors[idx].reshape(1, -1)
+    distances, indices = knn.kneighbors(movie_vector)
+
+    print(f"\nBecause you liked '{movie_title}', you might like:\n")
+    for i in indices[0][1:]:   # skip index 0 — that's the movie itself
+        print("-", new_df.iloc[i]['title'])
+
 if __name__ == "__main__":
     movies = load_data()
     new_df = engineer_features(movies)
+    vectors, cv = vectorize_tags(new_df)
+    knn = build_model(vectors)
 
-    print(new_df.shape)
-    print(new_df.head())
-    print("\nSample tags for movie 0:\n", new_df['tags'].iloc[0])
+    while True:
+        title = input("\nEnter a movie title (or 'quit' to exit): ")
+        if title.lower() == 'quit':
+            break
+        recommend(title, new_df, vectors, knn)
