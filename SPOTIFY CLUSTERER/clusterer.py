@@ -43,10 +43,23 @@ def find_elbow(scaled_features, max_k=10, sample_size=20000):
         print(f"K={k}, inertia={km.inertia_:.0f}")
 
 
+def fit_kmeans(scaled_features, k=6):
+    """Fit K-Means on the full dataset with the chosen number of clusters."""
+    km = KMeans(n_clusters=k, random_state=42, n_init=10)
+    clusters = km.fit_predict(scaled_features)
+    return km, clusters
+
+
 if __name__ == "__main__":
     df = load_data()
     features = select_features(df)
     scaled, scaler = scale_features(features)
 
-    print("\nFinding elbow point (this samples data, may take ~30-60 sec)...")
-    find_elbow(scaled)
+    print("\nFitting K-Means with K=6 on full dataset (this may take a minute)...")
+    km, clusters = fit_kmeans(scaled, k=6)
+
+    features['cluster'] = clusters
+    print("\nSongs per cluster:\n", features['cluster'].value_counts())
+
+    print("\nAverage feature values per cluster (this tells us what each cluster represents):")
+    print(features.groupby('cluster').mean())
