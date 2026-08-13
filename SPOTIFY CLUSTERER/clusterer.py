@@ -1,6 +1,7 @@
 import os
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
 
 
 def load_data(filepath=None):
@@ -29,13 +30,23 @@ def scale_features(features):
     return scaled, scaler
 
 
+def find_elbow(scaled_features, max_k=10, sample_size=20000):
+    """Test different K values on a sample and print inertia for each, to find the elbow point."""
+    import numpy as np
+    effective_sample_size = min(len(scaled_features), sample_size)
+    sample_idx = np.random.choice(len(scaled_features), effective_sample_size, replace=False)
+    sample = scaled_features[sample_idx]
+
+    for k in range(2, max_k + 1):
+        km = KMeans(n_clusters=k, random_state=42, n_init=10)
+        km.fit(sample)
+        print(f"K={k}, inertia={km.inertia_:.0f}")
+
+
 if __name__ == "__main__":
     df = load_data()
-    print(df.shape)
-
     features = select_features(df)
-    print("\nFeatures shape:", features.shape)
-    print(features.head(3))
-
     scaled, scaler = scale_features(features)
-    print("\nFirst scaled row:", scaled[0])
+
+    print("\nFinding elbow point (this samples data, may take ~30-60 sec)...")
+    find_elbow(scaled)
